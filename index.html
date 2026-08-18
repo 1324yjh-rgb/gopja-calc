@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>곱자 계산기</title>
+<meta name="description" content="목수 현장용 직각삼각형 · 스퀘어업 계산기">
+
+<!-- 카카오톡·메신저 링크 미리보기 카드.
+     ★ 배포해서 주소가 생기면 아래 og:url / og:image를 그 주소로 시작하는
+       전체 주소(https://...)로 바꿔주세요. 카카오톡 크롤러는 상대경로를 잘 못 읽습니다. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="곱자 계산기">
+<meta property="og:title" content="곱자 계산기 — 목수 현장용 삼각 계산">
+<meta property="og:description" content="아는 값 2개만 넣으면 나머지 변·물매·절단각이 바로. 스퀘어업 판정과 3·4·5 규구까지.">
+<meta property="og:image" content="og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="곱자 계산기 — 목수 현장용 삼각 계산">
+<meta name="twitter:description" content="아는 값 2개만 넣으면 나머지 변·물매·절단각이 바로.">
+<meta name="twitter:image" content="og-image.png">
+
+<meta name="theme-color" content="#FBFBF8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1C1F20" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="곱자">
+</head>
+<body>
+<style>
+  :root{
+    --ground:#EDEDE8; --panel:#FBFBF8; --panel-2:#F3F3EE; --panel-3:#E6E6E0;
+    --ink:#191B1C; --ink-2:#5A5E5A; --ink-3:#8C908A;
+    --line:#D6D8D1; --line-2:#BFC2BA;
+    --accent:#A87A00; --accent-bright:#EFB000; --accent-soft:rgba(239,176,0,.16);
+    --danger:#AF3B22; --danger-soft:rgba(175,59,34,.10);
+    --ok:#2C7A4C;
+    --mono:ui-monospace,"Cascadia Mono",Consolas,"SFMono-Regular",Menlo,monospace;
+    --sans:"Pretendard","Pretendard Variable",system-ui,-apple-system,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    --r:3px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#141617; --panel:#1C1F20; --panel-2:#232627; --panel-3:#2B2F30;
+      --ink:#E9E9E2; --ink-2:#A2A69F; --ink-3:#787C76;
+      --line:#2E3233; --line-2:#3E4344;
+      --accent:#EFB000; --accent-bright:#FFC526; --accent-soft:rgba(239,176,0,.13);
+      --danger:#E0714F; --danger-soft:rgba(224,113,79,.12);
+      --ok:#5EBE86;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#141617; --panel:#1C1F20; --panel-2:#232627; --panel-3:#2B2F30;
+    --ink:#E9E9E2; --ink-2:#A2A69F; --ink-3:#787C76;
+    --line:#2E3233; --line-2:#3E4344;
+    --accent:#EFB000; --accent-bright:#FFC526; --accent-soft:rgba(239,176,0,.13);
+    --danger:#E0714F; --danger-soft:rgba(224,113,79,.12);
+    --ok:#5EBE86;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); font-size:15px; line-height:1.5;
+    -webkit-text-size-adjust:100%;
+  }
+  button,input,select{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--accent-bright);outline-offset:2px}
+  code{font-family:var(--mono);font-size:.92em;background:var(--panel-2);padding:1px 4px;border-radius:2px}
+
+  .wrap{max-width:1120px;margin:0 auto;padding:0 16px 64px}
+
+  header{
+    border-bottom:1px solid var(--line); background:var(--panel);
+    position:sticky; top:0; z-index:20;
+  }
+  .hbar{
+    max-width:1120px;margin:0 auto;padding:10px 16px;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:baseline;gap:9px;margin-right:auto}
+  .brand h1{font-size:17px;font-weight:700;margin:0;letter-spacing:-.01em}
+  .brand .sub{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-3);
+  }
+  .setgrp{display:flex;align-items:center;gap:6px}
+  .setgrp label{
+    font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-3);
+  }
+  select.mini{
+    background:var(--panel-2);border:1px solid var(--line-2);border-radius:var(--r);
+    padding:4px 6px;font-family:var(--mono);font-size:12px;
+  }
+
+  nav.tabs{display:flex;border-bottom:1px solid var(--line);background:var(--panel)}
+  nav.tabs .inner{max-width:1120px;margin:0 auto;padding:0 16px;display:flex;width:100%}
+  nav.tabs button{
+    background:none;border:0;border-bottom:2px solid transparent;
+    padding:11px 15px;cursor:pointer;color:var(--ink-2);
+    font-size:14px;font-weight:600;letter-spacing:-.01em;
+  }
+  nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent-bright)}
+  nav.tabs button:hover{color:var(--ink)}
+
+  .pane{display:none}
+  .pane.on{display:block}
+  .cols{display:grid;gap:18px;padding-top:18px}
+  /* 좁은 화면: 입력이 먼저, 도형·결과는 그 아래 */
+  .figcol{order:2}
+  .fig svg{max-height:38vh;margin:0 auto}
+  @media (min-width:880px){
+    .cols{grid-template-columns:minmax(0,1fr) minmax(0,430px);align-items:start}
+    .figcol{order:0;position:sticky;top:118px}
+    .fig svg{max-height:none}
+  }
+
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:14px;
+  }
+  .card > h2{
+    margin:0 0 12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-3);font-weight:600;
+    display:flex;align-items:center;gap:8px;
+  }
+  .card > h2::after{content:"";flex:1;height:1px;background:var(--line)}
+  .stack{display:flex;flex-direction:column;gap:14px}
+
+  .fig{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r);padding:6px}
+  .fig svg{display:block;width:100%;height:auto}
+
+  .rows{display:flex;flex-direction:column;gap:8px}
+  .row{
+    display:grid;grid-template-columns:76px 1fr auto;align-items:center;gap:8px;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r);
+    padding:7px 8px 7px 10px;
+  }
+  .row.given{border-color:var(--line-2);background:var(--panel-3)}
+  .row.bad{border-color:var(--danger);background:var(--danger-soft)}
+  .row .lab{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .row .lab b{font-size:13.5px;font-weight:600}
+  .row .lab i{
+    font-family:var(--mono);font-style:normal;font-size:9.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-3);
+  }
+  .row input{
+    width:100%;background:transparent;border:0;padding:4px 2px;
+    font-family:var(--mono);font-size:19px;font-variant-numeric:tabular-nums;
+    text-align:right;min-width:0;
+  }
+  .row input::placeholder{color:var(--ink-3);font-size:15px}
+  .row.calc input{color:var(--accent)}
+  .row .tail{display:flex;align-items:center;gap:6px}
+  .row .unit{font-family:var(--mono);font-size:11px;color:var(--ink-3);min-width:20px}
+  .lock{
+    width:26px;height:26px;flex:none;display:grid;place-items:center;cursor:pointer;
+    background:transparent;border:1px solid transparent;border-radius:var(--r);
+  }
+  .lock:hover{background:var(--panel);border-color:var(--line-2)}
+  .lock svg{width:13px;height:13px;stroke:var(--ink-3);fill:none;stroke-width:1.7;stroke-linecap:round}
+  .row.given .lock svg{stroke:var(--accent-bright)}
+  .row.given .lock{background:var(--accent-soft)}
+  .row.given .lock .shackle-open{display:none}
+  .row:not(.given) .lock .shackle-closed{display:none}
+
+  .shaku{
+    font-family:var(--mono);font-size:10.5px;color:var(--ink-3);
+    text-align:right;grid-column:2/4;margin-top:-4px;
+  }
+  .shaku:empty{display:none}
+
+  .pitchmode{display:flex;margin-top:10px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .pitchmode button{
+    flex:1;background:var(--panel-2);border:0;border-right:1px solid var(--line);
+    padding:7px 4px;cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--ink-2);
+  }
+  .pitchmode button:last-child{border-right:0}
+  .pitchmode button[aria-pressed="true"]{background:var(--accent-soft);color:var(--ink);font-weight:700}
+
+  .kbar{
+    display:flex;align-items:flex-start;gap:10px;margin-top:14px;
+    background:var(--accent-soft);border:1px solid var(--accent-bright);
+    border-radius:var(--r);padding:10px 12px;font-size:13px;line-height:1.6;
+  }
+  .kbar[hidden]{display:none}
+  .kbar span{flex:1}
+  .kbar button{
+    background:none;border:0;cursor:pointer;color:var(--ink-2);
+    font-size:19px;line-height:1;padding:0 4px;
+  }
+  .kbar button:hover{color:var(--ink)}
+
+  .note{font-size:12px;color:var(--ink-3);margin:10px 0 0;line-height:1.65}
+  .alert{
+    margin-top:10px;padding:8px 10px;border-radius:var(--r);font-size:13px;
+    background:var(--danger-soft);border:1px solid var(--danger);color:var(--ink);
+  }
+  .alert:empty{display:none}
+
+  .outs{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+  .out{background:var(--panel-2);padding:9px 10px}
+  .out .k{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink-3);display:block;margin-bottom:2px;
+  }
+  .out .v{
+    font-family:var(--mono);font-size:20px;font-variant-numeric:tabular-nums;
+    letter-spacing:-.02em;display:block;
+  }
+  .out .v small{font-size:11px;color:var(--ink-3);margin-left:3px;letter-spacing:0}
+  .out.hi .v{color:var(--accent)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chips:empty{display:none}
+  .chip{
+    font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r);
+    padding:4px 8px;color:var(--ink-2);
+  }
+  .chip b{color:var(--accent);font-weight:600}
+
+  .btnrow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .btn{
+    background:var(--panel-2);border:1px solid var(--line-2);border-radius:var(--r);
+    padding:8px 13px;cursor:pointer;font-size:13.5px;font-weight:600;
+  }
+  .btn:hover{background:var(--panel-3)}
+  .btn.pri{background:var(--accent-bright);border-color:var(--accent-bright);color:#191B1C}
+  .btn.pri:hover{filter:brightness(1.06)}
+  .memo{
+    flex:1;min-width:130px;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:var(--r);padding:8px 10px;font-size:13.5px;
+  }
+
+  .saved{display:flex;flex-direction:column;gap:8px}
+  .sv{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r);
+    padding:9px 10px;display:flex;gap:10px;align-items:flex-start;
+  }
+  .sv .body{flex:1;min-width:0}
+  .sv .top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+  .sv .tag{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--accent-soft);color:var(--accent);padding:2px 5px;border-radius:2px;
+  }
+  .sv .when{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+  .sv .txt{font-family:var(--mono);font-size:12.5px;margin-top:4px;line-height:1.7;word-break:break-word}
+  .sv .mm{font-size:12.5px;color:var(--ink-2);margin-top:3px}
+  .sv .del{
+    background:none;border:0;cursor:pointer;color:var(--ink-3);font-size:18px;
+    line-height:1;padding:2px 6px;border-radius:var(--r);
+  }
+  .sv .del:hover{color:var(--danger);background:var(--danger-soft)}
+  .empty{color:var(--ink-3);font-size:13px;padding:6px 2px}
+
+  .sq-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .sq-grid .row{grid-template-columns:62px 1fr auto}
+  .sq-grid.trio{grid-template-columns:1fr 1fr 1fr}
+  .sq-grid.trio .row{grid-template-columns:1fr}
+  .sq-grid.trio .row input{font-size:17px}
+  @media (max-width:430px){.sq-grid{grid-template-columns:1fr}}
+
+  .verdict{
+    padding:11px 12px;border-radius:var(--r);border:1px solid var(--line-2);
+    background:var(--panel-2);font-size:14px;line-height:1.7;
+  }
+  .verdict.good{border-color:var(--ok)}
+  .verdict.warn{border-color:var(--accent-bright);background:var(--accent-soft)}
+  .verdict b{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+
+<header>
+  <div class="hbar">
+    <div class="brand">
+      <h1>곱자 계산기</h1>
+      <span class="sub">현장용 삼각 계산</span>
+    </div>
+    <div class="setgrp">
+      <label for="setUnit">단위</label>
+      <select class="mini" id="setUnit">
+        <option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option>
+      </select>
+    </div>
+    <div class="setgrp">
+      <label for="setRound">반올림</label>
+      <select class="mini" id="setRound">
+        <option value="1">1mm</option><option value="0.5">0.5mm</option><option value="0.1">0.1mm</option>
+      </select>
+    </div>
+    <div class="setgrp">
+      <label for="setShaku">척관법</label>
+      <select class="mini" id="setShaku">
+        <option value="1">표시</option><option value="0">끄기</option>
+      </select>
+    </div>
+  </div>
+  <nav class="tabs">
+    <div class="inner">
+      <button aria-selected="true" data-pane="rt">직각삼각형</button>
+      <button aria-selected="false" data-pane="sq">스퀘어업</button>
+      <button aria-selected="false" data-pane="sv">저장 <span id="svCount" style="color:var(--ink-3);font-weight:400"></span></button>
+    </div>
+  </nav>
+</header>
+
+<div class="wrap">
+
+<div class="kbar" id="kbar" hidden>
+  <span>카카오톡 안에서 열렸습니다. 홈 화면에 앱으로 설치하려면 <b>우측 하단 ⋮ → 다른 브라우저로 열기</b>를 눌러주세요.</span>
+  <button id="kbarX" aria-label="안내 닫기">&times;</button>
+</div>
+
+<section class="pane on" id="pane-rt">
+  <div class="cols">
+    <div class="figcol">
+      <div class="stack">
+        <div class="fig" id="figRT"></div>
+        <div class="card">
+          <h2>결과</h2>
+          <div class="outs" id="rtOuts"></div>
+          <div class="chips" id="rtPitchChips"></div>
+          <div class="btnrow">
+            <input class="memo" id="rtMemo" placeholder="메모 (예: 창고 서까래)">
+            <button class="btn pri" id="rtSave">저장</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h2>아는 값 2개를 입력</h2>
+        <div class="rows" id="rtRows">
+          <div class="row" data-k="b">
+            <div class="lab"><b>밑변</b><i>run · 수평</i></div>
+            <input id="in-b" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="밑변">
+            <div class="tail"><span class="unit" data-unit></span><button class="lock" data-lock="b" aria-label="밑변 잠금 전환"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path class="shackle-closed" d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/><path class="shackle-open" d="M5.5 7V5a2.5 2.5 0 0 1 5 0"/></svg></button></div>
+            <div class="shaku" id="sk-b"></div>
+          </div>
+          <div class="row" data-k="a">
+            <div class="lab"><b>높이</b><i>rise · 수직</i></div>
+            <input id="in-a" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="높이">
+            <div class="tail"><span class="unit" data-unit></span><button class="lock" data-lock="a" aria-label="높이 잠금 전환"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path class="shackle-closed" d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/><path class="shackle-open" d="M5.5 7V5a2.5 2.5 0 0 1 5 0"/></svg></button></div>
+            <div class="shaku" id="sk-a"></div>
+          </div>
+          <div class="row" data-k="c">
+            <div class="lab"><b>빗변</b><i>diag · 대각</i></div>
+            <input id="in-c" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="빗변">
+            <div class="tail"><span class="unit" data-unit></span><button class="lock" data-lock="c" aria-label="빗변 잠금 전환"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path class="shackle-closed" d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/><path class="shackle-open" d="M5.5 7V5a2.5 2.5 0 0 1 5 0"/></svg></button></div>
+            <div class="shaku" id="sk-c"></div>
+          </div>
+          <div class="row" data-k="t">
+            <div class="lab"><b>물매</b><i id="tUnitLab">pitch · 각도</i></div>
+            <input id="in-t" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="물매">
+            <div class="tail"><span class="unit" id="tUnit"></span><button class="lock" data-lock="t" aria-label="물매 잠금 전환"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path class="shackle-closed" d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/><path class="shackle-open" d="M5.5 7V5a2.5 2.5 0 0 1 5 0"/></svg></button></div>
+          </div>
+        </div>
+        <div class="pitchmode" id="pitchMode">
+          <button data-pm="deg" aria-pressed="true">각도 °</button>
+          <button data-pm="chi" aria-pressed="false">치물매</button>
+          <button data-pm="ratio" aria-pressed="false">1 : n</button>
+          <button data-pm="pct" aria-pressed="false">%</button>
+        </div>
+        <div class="alert" id="rtAlert"></div>
+        <div class="btnrow"><button class="btn" id="rtClear">전체 지우기</button></div>
+        <p class="note">
+          값을 넣으면 자물쇠가 잠기고 나머지가 자동으로 계산됩니다. 세 번째 값을 넣으면 가장 먼저 넣은 값이 풀립니다. 자물쇠를 눌러 직접 풀 수도 있습니다.<br>
+          입력 예시 — <code>1200</code> · <code>1.2m</code> · <code>120cm</code> · <code>4자3치</code> · <code>3치5푼</code>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pane" id="pane-sq">
+  <div class="cols">
+    <div class="figcol">
+      <div class="stack">
+        <div class="fig" id="figSQ"></div>
+        <div class="card">
+          <h2>판정</h2>
+          <div id="sqVerdict"></div>
+          <div class="btnrow">
+            <input class="memo" id="sqMemo" placeholder="메모 (예: 데크 기초 틀)">
+            <button class="btn pri" id="sqSave">저장</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <h2>대각선 맞추기</h2>
+        <div class="sq-grid">
+          <div class="row" data-k="W"><div class="lab"><b>가로</b><i>설계값</i></div><input id="in-W" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="가로"><div class="tail"><span class="unit" data-unit></span></div></div>
+          <div class="row" data-k="H"><div class="lab"><b>세로</b><i>설계값</i></div><input id="in-H" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="세로"><div class="tail"><span class="unit" data-unit></span></div></div>
+          <div class="row" data-k="d1"><div class="lab"><b>대각 A</b><i>실측</i></div><input id="in-d1" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="대각 A 실측"><div class="tail"><span class="unit" data-unit></span></div></div>
+          <div class="row" data-k="d2"><div class="lab"><b>대각 B</b><i>실측</i></div><input id="in-d2" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="대각 B 실측"><div class="tail"><span class="unit" data-unit></span></div></div>
+        </div>
+        <div class="outs" id="sqOuts" style="margin-top:12px"></div>
+        <div class="btnrow"><button class="btn" id="sqClear">지우기</button></div>
+        <p class="note">가로·세로만 넣으면 맞춰야 할 대각선 값이 나옵니다. 실측한 대각 A·B를 넣으면 어느 쪽을 얼마나 밀어야 하는지 알려줍니다.</p>
+      </div>
+
+      <div class="card">
+        <h2>3 · 4 · 5 규구</h2>
+        <div class="sq-grid trio">
+          <div class="row" data-k="p3"><div class="lab"><b>3측</b><i>짧은 변</i></div><input id="in-p3" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="3측"></div>
+          <div class="row" data-k="p4"><div class="lab"><b>4측</b><i>긴 변</i></div><input id="in-p4" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="4측"></div>
+          <div class="row" data-k="p5"><div class="lab"><b>5측</b><i>대각</i></div><input id="in-p5" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="5측"></div>
+        </div>
+        <p class="note">아무 칸이나 하나 채우면 나머지 둘이 나옵니다. 이 세 길이로 삼각형을 잡으면 그 모서리는 정확히 직각입니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pane" id="pane-sv">
+  <div style="padding-top:18px">
+    <div class="card">
+      <h2>저장한 계산</h2>
+      <div class="saved" id="savedList"></div>
+      <div class="btnrow"><button class="btn" id="svClear">전체 삭제</button></div>
+      <p class="note">이 기기의 브라우저에만 저장됩니다. 서버로 아무것도 보내지 않습니다.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var D=Math.PI/180;
+
+/* ---------- settings ---------- */
+var UF={mm:1,cm:10,m:1000};
+var SHK={'자':303.0303030303,'尺':303.0303030303,'치':30.303030303,'寸':30.303030303,'푼':3.0303030303,'分':3.0303030303};
+var S={unit:'mm',round:1,shaku:true};
+try{
+  var raw=localStorage.getItem('gopja.settings');
+  if(raw){var o=JSON.parse(raw); if(o.unit)S.unit=o.unit; if(o.round)S.round=o.round; S.shaku=o.shaku!==false;}
+}catch(e){}
+function saveSettings(){try{localStorage.setItem('gopja.settings',JSON.stringify(S))}catch(e){}}
+
+/* ---------- units ---------- */
+function parseLen(raw){
+  if(raw==null) return null;
+  var s=String(raw).trim().replace(/\s+/g,'').replace(/,/g,'');
+  if(!s) return null;
+  if(/[자치푼尺寸分]/.test(s)){
+    var mm=0,found=false,re=/([0-9]*\.?[0-9]+)([자치푼尺寸分])/g,m;
+    while((m=re.exec(s))){ mm+=parseFloat(m[1])*SHK[m[2]]; found=true; }
+    return found?mm:NaN;
+  }
+  var m2=s.match(/^([0-9]*\.?[0-9]+)(mm|cm|m)?$/i);
+  if(!m2) return NaN;
+  var v=parseFloat(m2[1]); if(!isFinite(v)) return NaN;
+  var u=(m2[2]||'').toLowerCase();
+  return v*(u?UF[u]:UF[S.unit]);
+}
+function roundMM(mm){ return Math.round(mm/S.round)*S.round; }
+function trimNum(n){
+  if(!isFinite(n)) return '—';
+  var s=n.toFixed(3);
+  if(s.indexOf('.')>=0) s=s.replace(/0+$/,'').replace(/\.$/,'');
+  return s;
+}
+function fmtLen(mm){ return trimNum(roundMM(mm)/UF[S.unit]); }
+function fmtShaku(mm){
+  if(!(mm>0)) return '';
+  var pun=mm/SHK['푼'];
+  var ja=Math.floor(pun/100); pun-=ja*100;
+  var chi=Math.floor(pun/10); pun-=chi*10;
+  var p=Math.round(pun*10)/10;
+  if(p>=10){p-=10;chi+=1}
+  if(chi>=10){chi-=10;ja+=1}
+  var out=[];
+  if(ja) out.push(ja+'자');
+  if(chi) out.push(chi+'치');
+  if(p) out.push(trimNum(p)+'푼');
+  return out.length?out.join(' '):'0푼';
+}
+
+/* ---------- pitch notation ---------- */
+var PM='deg';
+var PM_UNIT={deg:'°',chi:'치',ratio:'1:n',pct:'%'};
+var PM_LAB={deg:'pitch · 각도',chi:'pitch · 수평 10당',ratio:'pitch · 경사비',pct:'pitch · 백분율'};
+function pitchToDeg(raw){
+  if(raw==null) return null;
+  var s=String(raw).trim().replace(/\s+/g,'');
+  if(!s) return null;
+  if(PM==='ratio'){
+    var mr=s.match(/^1:([0-9]*\.?[0-9]+)$/);
+    var n=mr?parseFloat(mr[1]):parseFloat(s);
+    if(!isFinite(n)||n<=0) return NaN;
+    return Math.atan(1/n)/D;
+  }
+  var v=parseFloat(s);
+  if(!isFinite(v)||v<=0) return NaN;
+  if(PM==='deg') return v;
+  if(PM==='chi') return Math.atan(v/10)/D;
+  return Math.atan(v/100)/D;
+}
+function degToPitch(t){
+  var tn=Math.tan(t*D);
+  if(PM==='deg') return trimNum(Math.round(t*100)/100);
+  if(PM==='chi') return trimNum(Math.round(tn*1000)/100);
+  if(PM==='pct') return trimNum(Math.round(tn*10000)/100);
+  return trimNum(Math.round((1/tn)*100)/100);
+}
+
+/* ---------- right triangle ---------- */
+var RT={v:{a:null,b:null,c:null,t:null},given:[],err:''};
+
+function rtSolve(){
+  RT.err='';
+  var g=RT.given, v=RT.v, keep={};
+  g.forEach(function(k){keep[k]=1});
+  ['a','b','c','t'].forEach(function(k){ if(!keep[k]) v[k]=null; });
+  if(g.length<2) return;
+  var key=g.slice().sort().join('');
+  var a=v.a,b=v.b,c=v.c,t=v.t;
+  var badLen='길이는 0보다 커야 합니다.';
+  var badAng='물매는 0°와 90° 사이여야 합니다.';
+  if(key==='ab'){
+    if(!(a>0&&b>0)){RT.err=badLen;return}
+    v.c=Math.sqrt(a*a+b*b); v.t=Math.atan2(a,b)/D;
+  }else if(key==='ac'){
+    if(!(a>0&&c>0)){RT.err=badLen;return}
+    if(c<=a){RT.err='빗변은 높이보다 길어야 합니다.';return}
+    v.b=Math.sqrt(c*c-a*a); v.t=Math.asin(a/c)/D;
+  }else if(key==='bc'){
+    if(!(b>0&&c>0)){RT.err=badLen;return}
+    if(c<=b){RT.err='빗변은 밑변보다 길어야 합니다.';return}
+    v.a=Math.sqrt(c*c-b*b); v.t=Math.acos(b/c)/D;
+  }else if(key==='at'){
+    if(!(a>0)){RT.err=badLen;return}
+    if(!(t>0&&t<90)){RT.err=badAng;return}
+    v.b=a/Math.tan(t*D); v.c=a/Math.sin(t*D);
+  }else if(key==='bt'){
+    if(!(b>0)){RT.err=badLen;return}
+    if(!(t>0&&t<90)){RT.err=badAng;return}
+    v.a=b*Math.tan(t*D); v.c=b/Math.cos(t*D);
+  }else if(key==='ct'){
+    if(!(c>0)){RT.err=badLen;return}
+    if(!(t>0&&t<90)){RT.err=badAng;return}
+    v.a=c*Math.sin(t*D); v.b=c*Math.cos(t*D);
+  }
+}
+
+function cell(k,val,u,hi){
+  return '<div class="out'+(hi?' hi':'')+'"><span class="k">'+k+'</span><span class="v">'+val+(u?'<small>'+u+'</small>':'')+'</span></div>';
+}
+function chip(k,val){ return '<span class="chip">'+k+' <b>'+val+'</b></span>'; }
+
+function rtRender(){
+  var v=RT.v, g=RT.given, act=document.activeElement;
+  ['a','b','c','t'].forEach(function(k){
+    var row=$('.row[data-k="'+k+'"]',$('#rtRows')), inp=$('#in-'+k);
+    var isGiven=g.indexOf(k)>=0;
+    row.classList.toggle('given',isGiven);
+    row.classList.toggle('calc',!isGiven&&v[k]!=null);
+    row.classList.toggle('bad',!!RT.err&&isGiven);
+    if(!isGiven&&inp!==act) inp.value = (v[k]==null)?'':(k==='t'?degToPitch(v.t):fmtLen(v[k]));
+    if(k!=='t') $('#sk-'+k).textContent=(S.shaku&&v[k]>0)?fmtShaku(v[k]):'';
+  });
+  $$('[data-unit]').forEach(function(e){e.textContent=S.unit});
+  $('#tUnit').textContent=PM_UNIT[PM];
+  $('#tUnitLab').textContent=PM_LAB[PM];
+  $('#rtAlert').textContent=RT.err;
+
+  var done=!RT.err&&v.a>0&&v.b>0&&v.c>0&&v.t>0;
+  var O=$('#rtOuts');
+  if(!done){
+    O.innerHTML=cell('대기 중','—','',false);
+    $('#rtPitchChips').innerHTML='';
+  }else{
+    var area=v.a*v.b/2/1e6, peri=v.a+v.b+v.c;
+    O.innerHTML=
+      cell('플럼컷 · 수직절단',trimNum(Math.round((90-v.t)*100)/100),'°',true)+
+      cell('레벨컷 · 수평절단',trimNum(Math.round(v.t*100)/100),'°',true)+
+      cell('빗변',fmtLen(v.c),S.unit,false)+
+      cell('면적',trimNum(Math.round(area*1000)/1000),'㎡',false)+
+      cell('둘레',fmtLen(peri),S.unit,false);
+    var tn=Math.tan(v.t*D);
+    $('#rtPitchChips').innerHTML=
+      chip('각도',trimNum(Math.round(v.t*100)/100)+'°')+
+      chip('치물매',trimNum(Math.round(tn*1000)/100)+'치')+
+      chip('경사비','1 : '+trimNum(Math.round((1/tn)*100)/100))+
+      chip('백분율',trimNum(Math.round(tn*10000)/100)+'%')+
+      chip('서양식',trimNum(Math.round(tn*1200)/100)+' / 12');
+  }
+  drawRT();
+}
+
+function txt(x,y,anch,s,fill,size){
+  return '<text x="'+x+'" y="'+y+'" text-anchor="'+anch+'" fill="'+fill+'" font-size="'+size+'" font-family="ui-monospace,Consolas,monospace" style="font-variant-numeric:tabular-nums">'+s+'</text>';
+}
+function drawRT(){
+  var v=RT.v, ph=!(v.a>0&&v.b>0);
+  var A=ph?170:v.a, B=ph?300:v.b;
+  var s=Math.min(300/B,190/A);
+  var W=B*s, H=A*s;
+  var x0=(400-W)/2, y0=232, xB=x0+W, yC=y0-H;
+  var len=Math.sqrt(W*W+H*H), r=Math.min(46,len*0.4);
+  var ax=x0+r, ay=y0, bx=x0+r*W/len, by=y0-r*H/len;
+  var col=ph?'var(--ink-3)':'var(--accent-bright)';
+  var g='';
+  g+='<path d="M'+x0+' '+y0+' L'+xB+' '+y0+' L'+xB+' '+yC+' Z" fill="'+(ph?'none':'var(--accent-soft)')+'" stroke="'+col+'" stroke-width="2" stroke-linejoin="round"'+(ph?' stroke-dasharray="5 4"':'')+'/>';
+  g+='<path d="M'+(xB-15)+' '+y0+' L'+(xB-15)+' '+(y0-15)+' L'+xB+' '+(y0-15)+'" fill="none" stroke="var(--ink-3)" stroke-width="1.4"/>';
+  if(!ph){
+    g+='<path d="M'+ax+' '+ay+' A'+r+' '+r+' 0 0 0 '+bx+' '+by+'" fill="none" stroke="var(--ink-2)" stroke-width="1.4"/>';
+    g+=txt(x0+r+9,y0-8,'start',trimNum(Math.round(v.t*10)/10)+'°','var(--ink-2)',12);
+  }
+  g+=txt(x0+W/2,y0+23,'middle',ph?'밑변':fmtLen(v.b),'var(--ink)',13);
+  g+=txt(xB+10,y0-H/2+4,'start',ph?'높이':fmtLen(v.a),'var(--ink)',13);
+  g+=txt(x0+W/2-11,y0-H/2-9,'end',ph?'빗변':fmtLen(v.c),'var(--ink)',13);
+  if(!ph){
+    g+=txt(x0+W/2,y0+37,'middle','밑변','var(--ink-3)',10);
+    g+=txt(xB+10,y0-H/2+17,'start','높이','var(--ink-3)',10);
+    g+=txt(x0+W/2-11,y0-H/2+3,'end','빗변','var(--ink-3)',10);
+  }
+  $('#figRT').innerHTML='<svg viewBox="0 0 400 262" role="img" aria-label="직각삼각형 도형">'+g+'</svg>';
+}
+
+['a','b','c','t'].forEach(function(k){
+  var inp=$('#in-'+k);
+  inp.addEventListener('input',function(){
+    var rawv=inp.value;
+    var val=(k==='t')?pitchToDeg(rawv):parseLen(rawv);
+    var i=RT.given.indexOf(k);
+    if(rawv.trim()===''){
+      if(i>=0) RT.given.splice(i,1);
+      RT.v[k]=null;
+    }else{
+      if(i<0) RT.given.push(k);
+      while(RT.given.length>2){
+        var out=RT.given.shift();
+        if(out!==k) $('#in-'+out).value='';
+      }
+      RT.v[k]=(val==null||isNaN(val))?null:val;
+    }
+    rtSolve(); rtRender();
+  });
+  inp.addEventListener('blur',rtRender);
+});
+$$('#rtRows .lock').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var k=btn.getAttribute('data-lock'), i=RT.given.indexOf(k);
+    if(i>=0){ RT.given.splice(i,1); RT.v[k]=null; $('#in-'+k).value=''; }
+    else if(RT.v[k]!=null){
+      RT.given.push(k);
+      while(RT.given.length>2){ var out=RT.given.shift(); if(out!==k) $('#in-'+out).value=''; }
+    }
+    rtSolve(); rtRender();
+  });
+});
+$$('#pitchMode button').forEach(function(b){
+  b.addEventListener('click',function(){
+    PM=b.getAttribute('data-pm');
+    $$('#pitchMode button').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});
+    if(RT.given.indexOf('t')>=0&&RT.v.t!=null) $('#in-t').value=degToPitch(RT.v.t);
+    rtRender();
+  });
+});
+$('#rtClear').addEventListener('click',function(){
+  RT.v={a:null,b:null,c:null,t:null}; RT.given=[]; RT.err='';
+  ['a','b','c','t'].forEach(function(k){$('#in-'+k).value=''});
+  rtRender();
+});
+
+/* ---------- square up ---------- */
+var SQ={W:null,H:null,d1:null,d2:null};
+function sqCalc(){
+  ['W','H','d1','d2'].forEach(function(k){
+    var rawv=$('#in-'+k).value, val=parseLen(rawv);
+    SQ[k]=(rawv.trim()===''||val==null||isNaN(val))?null:val;
+    $('.row[data-k="'+k+'"]').classList.toggle('bad',rawv.trim()!==''&&(val==null||isNaN(val)));
+  });
+  var target=(SQ.W>0&&SQ.H>0)?Math.sqrt(SQ.W*SQ.W+SQ.H*SQ.H):null;
+  var out=cell('맞춰야 할 대각',target?fmtLen(target):'—',target?S.unit:'',true);
+  if(SQ.d1>0&&SQ.d2>0){
+    out+=cell('대각선 차',fmtLen(Math.abs(SQ.d1-SQ.d2)),S.unit,false);
+    out+=cell('보정량',fmtLen(Math.abs(SQ.d1-SQ.d2)/2),S.unit,true);
+  }
+  $('#sqOuts').innerHTML=out;
+
+  var V=$('#sqVerdict');
+  if(!(SQ.d1>0&&SQ.d2>0)){
+    V.innerHTML='<div class="verdict">대각 A와 B를 실측해서 넣으면 어느 쪽을 얼마나 밀어야 하는지 알려드립니다.</div>';
+  }else{
+    var diff=SQ.d1-SQ.d2, ad=Math.abs(diff);
+    if(roundMM(ad)<S.round){
+      V.innerHTML='<div class="verdict good">두 대각선이 같습니다. <b>직각이 맞습니다.</b></div>';
+    }else{
+      var lg=diff>0?'A':'B', sh=diff>0?'B':'A';
+      var h='<div class="verdict warn">대각 <b>'+lg+'</b>가 <b>'+fmtLen(ad)+' '+S.unit+'</b> 깁니다. '
+        +'<b>'+lg+'</b> 쪽 모서리를 <b>'+fmtLen(ad/2)+' '+S.unit+'</b> 안으로 밀거나, <b>'+sh+'</b> 쪽을 같은 만큼 밖으로 빼세요.';
+      if(target) h+='<br><span style="color:var(--ink-2)">설계 대각은 '+fmtLen(target)+' '+S.unit+'입니다.</span>';
+      V.innerHTML=h+'</div>';
+    }
+  }
+  drawSQ(target);
+}
+function drawSQ(target){
+  var W0=SQ.W>0?SQ.W:1200, H0=SQ.H>0?SQ.H:800;
+  var s=Math.min(300/W0,168/H0), W=W0*s, H=H0*s;
+  var x0=(400-W)/2, y0=(240-H)/2+10, x1=x0+W, y1=y0+H;
+  var ph=!(SQ.W>0&&SQ.H>0);
+  var lg=(SQ.d1>0&&SQ.d2>0&&roundMM(Math.abs(SQ.d1-SQ.d2))>=S.round)?(SQ.d1>SQ.d2?1:2):0;
+  var g='';
+  g+='<rect x="'+x0+'" y="'+y0+'" width="'+W+'" height="'+H+'" fill="'+(ph?'none':'var(--accent-soft)')+'" stroke="'+(ph?'var(--ink-3)':'var(--accent-bright)')+'" stroke-width="2"'+(ph?' stroke-dasharray="5 4"':'')+'/>';
+  g+='<line x1="'+x0+'" y1="'+y1+'" x2="'+x1+'" y2="'+y0+'" stroke="'+(lg===1?'var(--danger)':'var(--ink-2)')+'" stroke-width="'+(lg===1?2.2:1.3)+'"/>';
+  g+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x1+'" y2="'+y1+'" stroke="'+(lg===2?'var(--danger)':'var(--ink-2)')+'" stroke-width="'+(lg===2?2.2:1.3)+'"/>';
+  g+=txt(x0+W*0.28,y0+H*0.36,'middle','A',(lg===1?'var(--danger)':'var(--ink-2)'),13);
+  g+=txt(x0+W*0.72,y0+H*0.36,'middle','B',(lg===2?'var(--danger)':'var(--ink-2)'),13);
+  g+=txt(x0+W/2,y1+22,'middle',SQ.W>0?fmtLen(SQ.W):'가로','var(--ink)',13);
+  g+=txt(x1+9,y0+H/2+4,'start',SQ.H>0?fmtLen(SQ.H):'세로','var(--ink)',13);
+  if(target) g+=txt(x0+W/2,y0-9,'middle','대각 '+fmtLen(target)+' '+S.unit,'var(--ink-3)',11);
+  $('#figSQ').innerHTML='<svg viewBox="0 0 400 256" role="img" aria-label="사각형 대각선 도형">'+g+'</svg>';
+}
+['W','H','d1','d2'].forEach(function(k){ $('#in-'+k).addEventListener('input',sqCalc); });
+$('#sqClear').addEventListener('click',function(){
+  ['W','H','d1','d2'].forEach(function(k){$('#in-'+k).value=''}); sqCalc();
+});
+
+/* ---------- 3·4·5 ---------- */
+var TRIO=[['p3',3],['p4',4],['p5',5]];
+TRIO.forEach(function(pr){
+  var k=pr[0], base=pr[1];
+  $('#in-'+k).addEventListener('input',function(){
+    var v=parseLen(this.value);
+    if(this.value.trim()===''||v==null||isNaN(v)||!(v>0)){
+      TRIO.forEach(function(o){ if(o[0]!==k) $('#in-'+o[0]).value=''; });
+      return;
+    }
+    var unit=v/base;
+    TRIO.forEach(function(o){ if(o[0]!==k) $('#in-'+o[0]).value=fmtLen(unit*o[1]); });
+  });
+});
+
+/* ---------- saved ---------- */
+var SAVED=[];
+try{var r2=localStorage.getItem('gopja.saved'); if(r2) SAVED=JSON.parse(r2)||[];}catch(e){SAVED=[]}
+function persist(){try{localStorage.setItem('gopja.saved',JSON.stringify(SAVED))}catch(e){}}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function stamp(){
+  var d=new Date(), p=function(n){return (n<10?'0':'')+n};
+  return d.getFullYear()+'.'+p(d.getMonth()+1)+'.'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+function renderSaved(){
+  var L=$('#savedList');
+  $('#svCount').textContent=SAVED.length?'('+SAVED.length+')':'';
+  if(!SAVED.length){ L.innerHTML='<div class="empty">저장한 계산이 없습니다.</div>'; return; }
+  L.innerHTML=SAVED.map(function(it,i){
+    return '<div class="sv"><div class="body"><div class="top"><span class="tag">'+it.tag+'</span><span class="when">'+it.when+'</span></div>'
+      +'<div class="txt">'+it.txt+'</div>'
+      +(it.memo?'<div class="mm">'+it.memo+'</div>':'')
+      +'</div><button class="del" data-i="'+i+'" aria-label="삭제">&times;</button></div>';
+  }).join('');
+  $$('#savedList .del').forEach(function(b){
+    b.addEventListener('click',function(){ SAVED.splice(parseInt(b.getAttribute('data-i'),10),1); persist(); renderSaved(); });
+  });
+}
+$('#rtSave').addEventListener('click',function(){
+  var v=RT.v;
+  if(RT.err||!(v.a>0&&v.b>0&&v.c>0&&v.t>0)){ $('#rtAlert').textContent='계산이 끝난 뒤에 저장할 수 있습니다.'; return; }
+  SAVED.unshift({tag:'직각삼각형',when:stamp(),
+    txt:'밑변 '+fmtLen(v.b)+' · 높이 '+fmtLen(v.a)+' · 빗변 '+fmtLen(v.c)+' '+S.unit
+      +'<br>물매 '+trimNum(Math.round(v.t*100)/100)+'° ('+trimNum(Math.round(Math.tan(v.t*D)*1000)/100)+'치)'
+      +' · 플럼컷 '+trimNum(Math.round((90-v.t)*100)/100)+'° · 레벨컷 '+trimNum(Math.round(v.t*100)/100)+'°',
+    memo:esc($('#rtMemo').value.trim())});
+  $('#rtMemo').value=''; persist(); renderSaved();
+});
+$('#sqSave').addEventListener('click',function(){
+  var t=[];
+  if(SQ.W>0&&SQ.H>0) t.push('가로 '+fmtLen(SQ.W)+' × 세로 '+fmtLen(SQ.H)+' → 대각 '+fmtLen(Math.sqrt(SQ.W*SQ.W+SQ.H*SQ.H))+' '+S.unit);
+  if(SQ.d1>0&&SQ.d2>0) t.push('실측 A '+fmtLen(SQ.d1)+' / B '+fmtLen(SQ.d2)+' → 차 '+fmtLen(Math.abs(SQ.d1-SQ.d2))+' · 보정 '+fmtLen(Math.abs(SQ.d1-SQ.d2)/2)+' '+S.unit);
+  if(!t.length) return;
+  SAVED.unshift({tag:'스퀘어업',when:stamp(),txt:t.join('<br>'),memo:esc($('#sqMemo').value.trim())});
+  $('#sqMemo').value=''; persist(); renderSaved();
+});
+$('#svClear').addEventListener('click',function(){ SAVED=[]; persist(); renderSaved(); });
+
+/* ---------- tabs & settings ---------- */
+$$('nav.tabs button').forEach(function(b){
+  b.addEventListener('click',function(){
+    $$('nav.tabs button').forEach(function(x){x.setAttribute('aria-selected',x===b?'true':'false')});
+    $$('.pane').forEach(function(p){p.classList.remove('on')});
+    $('#pane-'+b.getAttribute('data-pane')).classList.add('on');
+    window.scrollTo(0,0);
+  });
+});
+$('#setUnit').value=S.unit;
+$('#setRound').value=String(S.round);
+$('#setShaku').value=S.shaku?'1':'0';
+function refreshAll(){ rtSolve(); rtRender(); sqCalc(); }
+$('#setUnit').addEventListener('change',function(){ S.unit=this.value; saveSettings(); refreshAll(); });
+$('#setRound').addEventListener('change',function(){ S.round=parseFloat(this.value); saveSettings(); refreshAll(); });
+$('#setShaku').addEventListener('change',function(){ S.shaku=this.value==='1'; saveSettings(); refreshAll(); });
+
+/* 카카오톡 인앱 브라우저에서는 홈 화면 설치가 막혀 있어 안내를 띄운다 */
+if(/KAKAOTALK/i.test(navigator.userAgent)){
+  var kb=$('#kbar');
+  kb.hidden=false;
+  $('#kbarX').addEventListener('click',function(){ kb.hidden=true; });
+}
+
+refreshAll(); renderSaved();
+})();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
